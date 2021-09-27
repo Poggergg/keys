@@ -30,3 +30,6 @@ class assigner:
         j = random.choice(Random_gen_chars)
         toeken = f"{a}{b}{c}{d}{e}{f}{g}{h}{i}"
         return toeken
+    @staticmethod
+    def give_id():
+      return assigner.Create(integer=True)

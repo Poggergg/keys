@@ -1,93 +1,164 @@
-from quart import Quart, redirect, render_template, request
+import quart
+from quart import Quart, redirect, render_template, request, session, url_for
+
 import json
-import os
-from replit import db
-from threading import Thread
+
 from key_gen import assigner
-import pyston
-w_logs = []
+
+import asyncio
+import time
+
+
+def make_copy(file_to_copy, file):
+
+    with open(file_to_copy, 'r') as firstfile:
+        with open(file, 'w') as secondfile:
+            for line in firstfile:
+                secondfile.write(line)
+                return secondfile
+
+
+def set_route(file):
+    th = assigner.give_id()
+    with open(f"{file}.txt", "w") as O:
+        O.write(th)
+        return th
+
+
 app = Quart('app')
 
-def user(value):
-    if value == "KNDoSWe6U":
-      return"Iron"
-    elif value == "WvpIRvrjw":
-      return "Phil"
-    elif value == "meUbsGekh":
-      return "Verrus"
-    elif value == "g9fgLzaxh":
-      return "Chiko"
-    elif value == "mJkHzJeSu":
-      return "Ally"
-    elif value == "oBLv6BCPx":
-      return "Mike"
-    elif value == "sRPfQOKZ1":
-      return "Rave"
-    elif value == "cAiq4v8Es":
-      return "Emily"
-    elif value == "yA9WrgNHJ":
-      return "Adam"
-    elif value == "vk6KmL1bi":
-      return "Kun"
-    elif value == "avwuaPvEp":
-      return "Lime"
-    elif value == "a5WUsoDWm":
-      return "Sam"
-    elif value == "pWKi3MDXr":
-      return "Lemon"
-    elif value == "iudghQQaF":
-      return "Eli"
-    elif value == "N0VA":
-      return "Nova"
-    
 
-key_dict = {'KNDoSWe6U' : "Iron", 'WvpIRvrjw' : "Phil", 'meUbsGekh' : "Verrus",}
-#   "Kun": "vk6KmL1bi", 
-#   "Lime": "avwuaPvEp", 
-#   "Sam": "a5WUsoDWm", 
-#   "Lemon": "pWKi3MDXr", 
-#   "Eli": "iudghQQaF", 
+def u_reg(name):
+    ra = assigner.Create()
+    with open("allowedKeys.json", "r") as A:
+        k = json.load(A)
+        k[name] = ra
+    with open("allowedKeys.json", 'w') as A:
+        json.dump(k, A)
+    return ra
+
+
+def user(value):
+    with open('allowedKeys(v1).json', "r") as E:
+        k = json.load(E)
+        try:
+            return k[value]['name']
+        except KeyError:
+            return '[/\]'
+
+
+def V2_encode(name, key, _type):
+    with open("allowedKeys(v1).json", "r") as E:
+        l_E = json.load(E)
+        l_E[key] = {
+            "name": name,
+            "key": key,
+            "attrs": {
+                "Private": "None",
+                "Admin": False,
+                "type": _type
+            }
+        }
+    with open("allowedKeys(v1).json", 'w') as E:
+        json.dump(l_E, E)
+
+
+def V2_decode(name):
+    with open("allowedKeys(v1).json", "r") as E:
+        k = json.load(E)
+        return dict(k[name])
+
+
+key_dict = {
+    'KNDoSWe6U': "Iron",
+    'WvpIRvrjw': "Phil",
+    'meUbsGekh': "Verrus",
+}
+#   "Kun": "vk6KmL1bi",
+#   "Lime": "avwuaPvEp",
+#   "Sam": "a5WUsoDWm",
+#   "Lemon": "pWKi3MDXr",
+#   "Eli": "iudghQQaF",
 #   "4162_ADMIN": "7mES3UObM"
 
 
+@app.route(f'/dev-point/{set_route("text")}/<name>')
+async def ocn(name):
+    V2_encode(name, assigner.give_id(), _type='dev-point')
+    return V2_decode
 
-@app.route('/home/@<name>')
-async def asd(name):
 
-  with open(f"allowedKeys.json", "r") as logs:
-    l_logs = json.load(logs)
+@app.route(f'/iframe-key/{set_route("i_key")}/<endpoint>')
+async def retiframe(endpoint):
+    return redirect(endpoint)
 
-    key_values = [key for key in l_logs.values()]
-    key_name = [key for key in l_logs]
 
-    if name == "7mES3UObM":
-      return await render_template('4162_config.json')
-      with open("Weblogs.json", "r") as r:
-        l_r = json.load(r)
-        l_r[f"{user(name)}"] = "Login detected"
-      with open("Weblogs.json", "w") as r:
-        json.dump(l_r, r)
-    if name in key_values:
-      print(f"detected key {key_values} {name}")
-      return await render_template('the-game.html', name=user(value=name))
-  
-    else:
-      print(f"did not detect key {key_values} {name}")
-      return redirect("/")
+@app.route('/Iron-Web/')
+async def han():
+    return await render_template("iframes.html")
+
+
+@app.route('/Iron-Web/', methods=['POST'])
+async def ha():
+    url = (await request.form)['text']
+    return await render_template('iframes.html', url=url, ur=url)
+
+
+@app.route("/render/<htmlname>/<is_html>")
+async def rander(htmlname, is_html: bool):
+    if is_html:
+        try:
+            return await render_template(f"{htmlname}")
+        except Exception as E:
+            return E
+
 
 @app.route('/')
-async def ome():
-  return db.keys()
-  
-@app.route('/Data')
-async def page():
-  return await render_template("data-use.html")
+async def return_landing():
+    return redirect('/landing')
 
+
+@app.route('/landing')
+async def call_():
+    return await render_template("landing.html")
+
+
+@app.route('/login/@<name>')
+async def asd(name):
+    return await render_template('the-game.html', name=user(value=name))
+
+
+@app.route("/sign-up")
+async def aksj():
+    th = assigner.Create()
+    return await render_template("sign-up.html", exa=th)
+
+
+@app.route('/sign-up', methods=['POST'])
+async def on_():
+    this = assigner.Create()
+    txt = (await request.form)['text']
+    V2_encode(txt, this, _type="sign-up")
+    return redirect(f'/login/@{this}')
+
+
+@app.route(f'/reset/{set_route("reset")}/<name>')
+async def reset(name):
+    return V2_decode(name)['name']
+
+
+@app.route('/whois/<name>')
+async def get_red(name):
+    return await render_template("free_temp.html",
+                                 one=V2_decode(name['key']),
+                                 name=V2_decode(name=name)['name'],
+                                 admin=V2_decode(name=name)['attrs']['Admin'])
 
 
 @app.route('/account-logs/')
 async def my_form():
     return await render_template('activity-searcher.html')
+
 
 @app.route('/account-logs/', methods=['POST'])
 async def my_form_post():
@@ -95,39 +166,49 @@ async def my_form_post():
     processed_text = text
 
     with open("Weblogs.json", "r") as f:
-      l_f = json.load(f)
-      for user_logs in l_f:
-        if user_logs == f"{user(text)}":
-          with open(f"{user(text)}", 'w'):
-            pass
-          with open(f"{user(text)}", 'r') as j:
-            l_j = json.load(j)
+        l_f = json.load(f)
+        for user_logs in l_f:
+            if user_logs == f"{user(text)}":
+                with open(f"{user(text)}", 'w'):
+                    pass
+                with open(f"{user(text)}", 'r') as j:
+                    l_j = json.load(j)
 
-      l_f[f"{text} | ID:{assigner.Create()}"] = f"{user(value=text)} was detected searching their account activity"
+        l_f[f"{text} | ID:{assigner.Create()}"] = f"{user(value=text)} was detected searching their account activity"
 
     with open("Weblogs.json", "w") as f:
-      json.dump(l_f, f)
-      return await render_template("activity.html", name=user(value=text), logs=l_f)
+        json.dump(l_f, f)
+        return await render_template("activity.html",
+                                     name=user(value=text),
+                                     logs=l_f)
 
-@app.route('/exec')
+
+@app.route('/cool', methods=['GET', 'POST'])
+async def inex():
+    if request.method == 'POST':
+        this = (await request.form('hello'))
+        print(this)
+
+    return '''<form method="post">
+<input type="checkbox" name="hello" value="world" checked>
+<input type="checkbox" name="hello" value="davidism" checked>
+<input type="submit">
+</form>'''
+
+
+
+@app.route('/c/')
 async def index():
-  return await render_template('index.html')
+    return await render_template(
+        'color.html',
+        co=session.get('user', 'black'),
+    )
 
-@app.route('/exec', methods=['POST', 'GET'])
-async def req():
-    if request.method == "POST":
-        form = await request.form
-        lang = form["lang"].lower().replace(" ", "")
-        code = form["code"]
 
-        client = pyston.PystonClient()
-        try:
+@app.route('/colour/', methods=['POST'])
+async def set_colour():
+    session['user'] = "black"
+    return redirect(url_for('index'))
 
-          output = await client.execute(lang, code)
-        except:
-          return "An error occured."
-        return await render_template("index.html", output=output, code=code, lang=lang)
 
-    else:
-        return await render_template("index.html")
-app.run(host='0.0.0.0',port=8042)
+app.run(host='0.0.0.0', port=8042)
