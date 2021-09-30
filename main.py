@@ -8,6 +8,51 @@ from key_gen import assigner
 import asyncio
 import time
 
+lis = [10]
+aps = []
+
+counter = -1
+
+
+def count():
+    global counter
+    counter += 1
+    return counter
+
+
+#custom class for json wrapping
+class db:
+    """Internal methods for the storage and retrival of messages"""
+    @staticmethod  #{
+    def _append(name, _time, content):
+        """'Appends' the keyword arguments into a json format"""
+        thing = {
+          "name": name,
+           "_time": _time, 
+           "content": content, 
+           "id": counter + 1
+           }
+        with open("messagestore.json", 'r') as E:
+            r = json.load(E)
+            r[count()] = thing
+
+        with open("messagestore.json", 'w') as E:
+            json.dump(r, E)
+        return dict(thing)
+
+        #} - creates and updates a json file with the dict values from kws
+
+    @staticmethod
+    def _unappend(key):
+        """'Unappends' the previously 'Appended' values into a json format"""
+        with open("messagestore.json", 'r') as E:
+            k = json.load(E)
+            try:
+                return dict(k[str(key)])
+            except KeyError as e:
+                return {"Exception occured": e}
+
+
 
 def make_copy(file_to_copy, file):
 
@@ -69,6 +114,16 @@ def V2_decode(name):
         return dict(k[name])
 
 
+def perm_check(user=None):
+  try:
+    if V2_decode(name= user)['Admin'] == False: 
+      return redirect(f"/home/{user}")
+    else:
+      return True
+  except Exception as E:
+    return E
+
+
 key_dict = {
     'KNDoSWe6U': "Iron",
     'WvpIRvrjw': "Phil",
@@ -123,10 +178,58 @@ async def call_():
     return await render_template("landing.html")
 
 
-@app.route('/login/@<name>')
+@app.route('/home/@<name>')
 async def asd(name):
     return await render_template('the-game.html', name=user(value=name))
 
+
+@app.route('/home/@<nae>', methods=["POST"])
+async def assa(nae):
+    msg = (await request.form)['text']
+    db._append(name=user(value=nae), _time="Test", content=msg)
+    try:
+      return await render_template('the-game.html',
+
+    name=db._unappend(key=counter)['name'], 
+    message=db._unappend(key=counter)['content'], 
+
+    name2=db._unappend(key=counter - 1)['name'], 
+    message2=db._unappend(key=counter - 1)['content'], 
+
+    name3=db._unappend(key=counter - 2)['name'],
+    message3=db._unappend(key=counter - 2)['content'], 
+
+    name4=db._unappend(key=counter - 3)['name'], 
+    message4=db._unappend(key=counter - 3)['content'], 
+
+    name5=db._unappend(key=counter - 4)['name'], 
+    message5=db._unappend(key=counter - 4)['content'], 
+
+    name6=db._unappend(key=counter - 5)['name'], 
+    message6=db._unappend(key=counter - 5)['content'], 
+
+    name7=db._unappend(key=counter - 6)['name'], 
+    message7=db._unappend(key=counter - 6)['content'],
+    
+    name8=db._unappend(key=counter - 7)['name'], 
+    message8=db._unappend(key=counter - 7)['content'], 
+
+    name9=db._unappend(key=counter - 8)['name'], 
+    message9=db._unappend(key=counter - 8)['content'], 
+
+    name10=db._unappend(key=counter - 9)['name'], 
+    message10=db._unappend(key=counter - 9)['content'])
+    except Exception as e:
+      return await render_template("blank.html", error=type(e))
+
+
+@app.route('/admin/<name>')
+@perm_check()
+
+
+def web_view(istrue):
+  if istrue.startswith("https://") and istrue.endswith(".repl.co"):
+    return istrue
 
 @app.route("/sign-up")
 async def aksj():
@@ -139,7 +242,7 @@ async def on_():
     this = assigner.Create()
     txt = (await request.form)['text']
     V2_encode(txt, this, _type="sign-up")
-    return redirect(f'/login/@{this}')
+    return redirect(f'/home/@{this}')
 
 
 @app.route(f'/reset/{set_route("reset")}/<name>')
@@ -196,7 +299,6 @@ async def inex():
 </form>'''
 
 
-
 @app.route('/c/')
 async def index():
     return await render_template(
@@ -211,4 +313,4 @@ async def set_colour():
     return redirect(url_for('index'))
 
 
-app.run(host='0.0.0.0', port=8042)
+app.run(host='0.0.0.0', port=8042, debug=True)
